@@ -1,0 +1,59 @@
+# tax_fraud_detection.py
+# Author: Agor Albert Godsmann
+# Description: Simple AI/Data project that simulates detecting tax fraud using data patterns.
+
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+# Step 1: Generate simulated tax data
+np.random.seed(42)
+n = 500
+
+data = pd.DataFrame({
+    'income_reported': np.random.randint(20000, 200000, n),
+    'actual_income': np.random.randint(20000, 200000, n),
+    'num_dependents': np.random.randint(0, 6, n),
+    'deductions_claimed': np.random.randint(0, 50000, n),
+    'business_expenses': np.random.randint(0, 70000, n),
+})
+
+# Step 2: Create fraud label (1 = fraud, 0 = honest)
+data['fraudulent'] = np.where(
+    (data['income_reported'] < data['actual_income'] * 0.8) | 
+    (data['deductions_claimed'] > 40000), 
+    1, 0
+)
+
+# Step 3: Prepare training data
+X = data[['income_reported', 'actual_income', 'num_dependents', 'deductions_claimed', 'business_expenses']]
+y = data['fraudulent']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
+# Step 4: Train a model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Step 5: Evaluate
+y_pred = model.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+# Step 6: Detect potential fraud
+sample = pd.DataFrame({
+    'income_reported': [45000],
+    'actual_income': [120000],
+    'num_dependents': [2],
+    'deductions_claimed': [45000],
+    'business_expenses': [20000],
+})
+
+prediction = model.predict(sample)
+print("\nFraud Prediction for new data:", "FRAUD DETECTED" if prediction[0] == 1 else "No Fraud Detected")
+
+# Optional: save dataset and model
+data.to_csv("simulated_tax_data.csv", index=False)
+print("\nSimulated dataset saved as simulated_tax_data.csv")
